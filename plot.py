@@ -5,6 +5,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
 
 from scipy import stats
 
@@ -57,11 +58,26 @@ def main():
             ii_date = start_date + one_day * delta_day
             progress_bar.set_description(f'Plotting {ii_date.date()}')
 
-            fig, axs = plt.subplots(2, 1, sharex=True)
+            fig, axs = plt.subplots(3, 1, sharex=True)
+            fig.suptitle(f'Day {ii_date.date()}', fontsize=16)
             plot_df = df[((ii_date <= df['time']) & (df['time'] < ii_date + one_day))]
-            plot_df[['co2', 'tvoc']].plot(ax=axs[0])
-            plot_df[['hum_ext', 'hum_room', 'hum_wall', 'hum_ceiling',
-                     'temp_ext', 'temp_room', 'temp_wall', 'temp_ceiling']].plot(ax=axs[1])
+
+            legend_loc = {'loc': 'center left', 'bbox_to_anchor': (1.0, 0.5)}
+            ax_co2, ax_temp, ax_hum = axs
+            plot_df[['co2', 'tvoc']].plot(ax=ax_co2).legend(**legend_loc)
+            plot_df[['temp_ext', 'temp_room', 'temp_wall', 'temp_ceiling']].plot(ax=ax_temp).legend(**legend_loc)
+            plot_df[['hum_ext', 'hum_room', 'hum_wall', 'hum_ceiling']].plot(ax=ax_hum).legend(**legend_loc)
+
+            ax_co2.set_ylabel('Concentration [ppm]')
+            ax_temp.set_ylabel('Temperature [°C]')
+            ax_hum.set_ylabel('Humidity [%]')
+            ax_hum.set_xlabel('Time [hh:mm]')
+            # Define the datetime format
+            date_form = DateFormatter("%H:%M")
+            for ax in axs:
+                ax.xaxis.set_major_formatter(date_form)
+
+            plt.tight_layout()
             filename = f'{ii_date.strftime("%Y-%m-%d")}.png'
             fig.savefig(os.path.join('plots', filename))
             plt.close(fig)
